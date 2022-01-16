@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="cn.delta1037.schedule" />
+
+    <!-- 插件载入主文件配置 -->
+    <bean id="redefineProperty"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:*.properties</value>
+            </list>
+        </property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="order" value="1"/>
+    </bean>
+
+    <!-- 插件默认配置 -->
+    <bean id="defaultProperty"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:application.properties</value>
+            </list>
+        </property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="order" value="2"/>
+    </bean>
+
+    <bean id="eventType"
+            class="cn.delta1037.config.EventTypeConfig">
+        <property name="defaultEventType" value="${default.event.type}"/>
+        <property name="defaultEventTypeValue" value="${default.event.type.value}"/>
+        <property name="customEventType" value="${custom.event.type}"/>
+        <property name="customEventTypeValue" value="${custom.event.type.value}"/>
+    </bean>
+
+    <bean id="eventLevel"
+          class="cn.delta1037.config.EventLevelConfig">
+        <property name="defaultEventLevel" value="${default.event.level}"/>
+        <property name="customEventLevel" value="${custom.event.level}"/>
+    </bean>
+
+    <bean id="dataSource"
+          class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${audit.jdbc.driverClass}"/>
+        <property name="jdbcUrl" value="${audit.jdbc.url}"/>
+        <property name="user" value="${audit.jdbc.user}"/>
+        <property name="password" value="${audit.jdbc.password}"/>
+    </bean>
+
+    <!-- 配置SessionFactory -->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource">
+            <ref local="dataSource" />
+        </property>
+        <!-- 配置Hibernate的属性 -->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">
+                    ${hibernate.dialect}
+                </prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.connection.release_mode">after_statement</prop>
+            </props>
+        </property>
+        <!-- 指定Hibernate实体类Annotation-->
+        <property name="annotatedClasses">
+            <list>
+                <value>cn.delta1037.entity.Event</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="hibernateTemplate"
+          class="org.springframework.orm.hibernate3.HibernateTemplate">
+        <property name="sessionFactory">
+            <ref local="sessionFactory" />
+        </property>
+    </bean>
+
+    <bean id="backupToLocalDataSource"
+          class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${backup.local.jdbc.driverClass}"/>
+        <property name="jdbcUrl" value="${backup.local.jdbc.url}"/>
+        <property name="user" value="${backup.local.jdbc.user}"/>
+        <property name="password" value="${backup.local.jdbc.password}"/>
+    </bean>
+
+    <bean id="backupToLocalSessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource">
+            <ref local="backupToLocalDataSource" />
+        </property>
+        <!-- 配置Hibernate的属性 -->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">
+                    ${hibernate.dialect}
+                </prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.connection.release_mode">after_statement</prop>
+            </props>
+        </property>
+        <!-- 指定Hibernate实体类Annotation-->
+        <property name="annotatedClasses">
+            <list>
+                <value>cn.delta1037.entity.Event</value>
+                <value>cn.delta1037.entity.BackupRestoreLog</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="backupToLocalHibernateTemplate"
+          class="org.springframework.orm.hibernate3.HibernateTemplate">
+        <property name="sessionFactory">
+            <ref local="backupToLocalSessionFactory" />
+        </property>
+    </bean>
+
+    <bean id="backupToRemoteDataSource"
+          class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${backup.remote.jdbc.driverClass}"/>
+        <property name="jdbcUrl" value="${backup.remote.jdbc.url}"/>
+        <property name="user" value="${backup.remote.jdbc.user}"/>
+        <property name="password" value="${backup.remote.jdbc.password}"/>
+    </bean>
+
+    <bean id="backupToRemoteSessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource">
+            <ref local="backupToRemoteDataSource" />
+        </property>
+        <!-- 配置Hibernate的属性 -->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">
+                    ${hibernate.dialect}
+                </prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.connection.release_mode">after_statement</prop>
+            </props>
+        </property>
+        <!-- 指定Hibernate实体类Annotation-->
+        <property name="annotatedClasses">
+            <list>
+                <value>cn.delta1037.entity.Event</value>
+                <value>cn.delta1037.entity.BackupRestoreLog</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="backupToRemoteHibernateTemplate"
+          class="org.springframework.orm.hibernate3.HibernateTemplate">
+        <property name="sessionFactory">
+            <ref local="backupToRemoteSessionFactory" />
+        </property>
+    </bean>
+
+    <bean id="backup"
+          class="cn.delta1037.config.BackupConfig">
+        <property name="backupToLocal" value="${backup.local}"/>
+        <property name="backupToRemote" value="${backup.remote}"/>
+        <property name="backupToLocalRate" value="${backup.local.rate}"/>
+        <property name="backupToRemoteRate" value="${backup.remote.rate}"/>
+    </bean>
+</beans>
